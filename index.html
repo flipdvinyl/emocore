@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Emocore</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
+      :root {
+        --card-font-size: 1.75rem;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgb(127, 127, 127);
+        font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        transition: background-color 1s ease;
+      }
+      .card-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+        margin-top: 7rem;
+      }
+      .card-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0rem;
+      }
+      .card-row {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .card-title {
+        font-size: 28px;
+        font-weight: 300;
+        color: #f8fafc;
+        position: absolute;
+        margin-top: -13rem;
+      }
+      .card {
+        width: fit-content;
+        max-width: 90vw;
+        padding: 1rem 0.5rem;
+        border-radius: 1rem;
+        box-sizing: border-box;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 75px;
+        text-align: center;
+        font-size: var(--card-font-size);
+        font-weight: 300;
+        color: #0f172a;
+      }
+      .card-text {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+        line-height: 1.2;
+      }
+      .card-text-main {
+        display: inline-block;
+        min-width: 1ch;
+        outline: none;
+        border: none;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        text-align: center;
+        white-space: nowrap;
+      }
+      .card-fill {
+        color: rgba(15, 23, 42, 0.25);
+      }
+      .card-handle {
+        user-select: none;
+        line-height: 1;
+        font-size: 1.5rem;
+        font-weight: 300;
+        color: #0f172a;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 120ms ease, transform 120ms ease;
+      }
+      .card-handle.is-visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .card-handle-horizontal {
+        display: inline-flex;
+        align-items: center;
+      }
+      .card-handle-vertical {
+        display: inline-flex;
+        justify-content: center;
+        transform: scale(0.6);
+      }
+      #card-handle,
+      #card-handle-left {
+        cursor: ew-resize;
+      }
+      .card-meta-block {
+        position: relative;
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.35rem;
+      }
+      .card-count {
+        font-size: calc(var(--card-font-size) * 0.6);
+        color: rgba(248, 250, 252, 0.7);
+        font-weight: 300;
+        margin-block-end: 0em;
+      }
+      .card-emotion,
+      .card-language,
+      .card-options-item {
+        font-size: 16px;
+        color: rgba(248, 250, 252, 0.7);
+        font-weight: 300;
+      }
+      .card-emotion {
+        opacity: 0;
+        margin-block-start: 0em;
+        margin-block-end: 0em;
+      }
+      .card-language {
+        opacity: 0;
+        margin-block-start: 0em;
+      }
+      .card-options-separator {
+        color: rgba(248, 250, 252, 0.35);
+        font-size: 16px;
+        font-weight: 300;
+        padding: 0 0.35rem;
+      }
+      .card-toggle {
+        background: none;
+        border: none;
+        cursor: pointer;
+        width: 2rem;
+        height: 2rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+      }
+      .card-toggle svg {
+        width: 1.6rem;
+        height: 1.6rem;
+        fill: none;
+      }
+      .card-toggle svg[data-icon='play'] path {
+        fill: #ffffff;
+      }
+      .card-toggle svg[data-icon='pause'] path {
+        fill: #ffffff;
+      }
+      .card-toggle.is-playing svg[data-icon='play'] {
+        display: none;
+      }
+      .card-toggle:not(.is-playing) svg[data-icon='pause'] {
+        display: none;
+      }
+      .card-options {
+        pointer-events: auto;
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        justify-content: center;
+        width: 100vw;
+        max-width: 100vw;
+      }
+      .card-options-strip {
+        display: flex;
+        gap: 0.75rem;
+        overflow-x: auto;
+        justify-content: flex-start;
+        align-items: center;
+        scrollbar-width: none;
+      }
+      .card-options-strip::-webkit-scrollbar {
+        display: none;
+      }
+      .card-options-spacer-start,
+      .card-options-spacer-end {
+        flex: 0 0 50vw;
+      }
+      .card-options-item {
+        opacity: 0.35;
+        transition: opacity 180ms ease;
+        white-space: nowrap;
+      }
+      .card-options-item.is-active {
+        opacity: 1;
+        font-weight: 300;
+      }
+      @media (prefers-color-scheme: dark) {
+        .card {
+          color: #f8fafc;
+        }
+        .card-fill {
+          color: rgba(248, 250, 252, 0.3);
+        }
+        .card-handle {
+          color: #f8fafc;
+        }
+        .card-count {
+          color: rgba(248, 250, 252, 0.7);
+        }
+        .card-emotion {
+          color: rgba(248, 250, 252, 0.7);
+        }
+        .card-language {
+          color: rgba(248, 250, 252, 0.7);
+        }
+        .card-options-item {
+          color: rgba(248, 250, 252, 0.7);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card-wrapper">
+      <h1 class="card-title">문장 슬라임</h1>
+      <div class="card-container">
+        <!-- <span class="card-handle card-handle-vertical" id="card-handle-top" aria-hidden="true">︿</span> -->
+        <div class="card-row">
+          <span class="card-handle card-handle-horizontal" id="card-handle-left" aria-hidden="true">‹</span>
+          <div class="card" id="card">
+            <span class="card-text" id="card-text">
+              <span
+                id="card-text-main"
+                class="card-text-main"
+                contenteditable="true"
+                spellcheck="false"
+                role="textbox"
+                aria-label="텍스트 입력"
+              >
+                안녕
+              </span><span class="card-fill" id="card-text-fill"></span>
+            </span>
+          </div>
+          <span class="card-handle card-handle-horizontal" id="card-handle" aria-hidden="true">›</span>
+        </div>
+        <!-- <span class="card-handle card-handle-vertical" id="card-handle-bottom" aria-hidden="true">﹀</span> -->
+      </div>
+      <div class="card-meta-block" data-meta="count">
+        <button class="card-toggle" id="card-toggle" type="button" aria-label="Toggle playback">
+          <svg viewBox="0 0 24 24" data-icon="play">
+            <path d="M8 5l10 7-10 7z" />
+          </svg>
+          <svg viewBox="0 0 24 24" data-icon="pause">
+            <path d="M8 5h1.6v14H8zM14.4 5h1.6v14h-1.6z" />
+          </svg>
+        </button>
+        <p class="card-count" id="card-count"></p>
+      </div>
+      <div class="card-meta-block" data-meta="emotion">
+        <p class="card-emotion" id="card-emotion"></p>
+        <div class="card-options" id="card-emotion-options-wrapper">
+          <div class="card-options-strip" id="card-emotion-options"></div>
+        </div>
+      </div>
+      <div class="card-meta-block card-meta-language" data-meta="language">
+        <p class="card-language" id="card-language"></p>
+        <div class="card-options" id="card-language-options-wrapper">
+          <div class="card-options-strip" id="card-language-options"></div>
+        </div>
+      </div>
+    </main>
+    <script>
+      const card = document.getElementById('card');
+      const cardText = document.getElementById('card-text');
+      const cardTextMain = document.getElementById('card-text-main');
+      const cardTextFill = document.getElementById('card-text-fill');
+      const handleRight = document.getElementById('card-handle');
+      const handleLeft = document.getElementById('card-handle-left');
+      const cardRow = document.querySelector('.card-row');
+      const handleTop = document.getElementById('card-handle-top');
+      const handleBottom = document.getElementById('card-handle-bottom');
+      const countTarget = document.getElementById('card-count');
+      const emotionTarget = document.getElementById('card-emotion');
+      const languageTarget = document.getElementById('card-language');
+      const emotionOptionsWrapper = document.getElementById('card-emotion-options-wrapper');
+      const emotionOptionsStrip = document.getElementById('card-emotion-options');
+      const languageOptionsWrapper = document.getElementById('card-language-options-wrapper');
+      const languageOptionsStrip = document.getElementById('card-language-options');
+      const allHandles = [handleLeft, handleRight, handleTop, handleBottom].filter(Boolean);
+      const HOVER_DISTANCE = 20;
+      const emotionList = [
+        'Disgust',
+        'Fear',
+        'Anger',
+        'Ecstasy',
+        'Amusement',
+        'Amazement',
+        'Pride',
+        'Adoration',
+        'Desire',
+        'Interest',
+        'Neutral',
+        'Serenity',
+        'Contentment',
+        'Relief',
+        'Cuteness',
+        'Realization',
+        'Confusion',
+        'Embarassment',
+        'Distress',
+        'Disappointment',
+        'Sadness',
+        'Pain',
+        'Guilt',
+      ];
+      const languageList = [
+        'English (US)',
+        'Korean',
+        'Japanese',
+        'Bulgarian',
+        'Czech',
+        'Danish',
+        'Greek',
+        'Spanish',
+        'Estonian',
+        'Finnish',
+        'Hungarian',
+        'Italian',
+        'Dutch',
+        'Polish',
+        'Portuguese',
+        'Romanian',
+        'Arabic',
+        'German',
+        'French',
+        'Hindi',
+        'Indonesian',
+        'Russian',
+        'Vietnamese',
+      ];
+
+      const emotionColors = {
+        Disgust: 'rgb(110, 125, 110)',
+        Fear: 'rgb(105, 120, 135)',
+        Anger: 'rgb(135, 105, 105)',
+        Ecstasy: 'rgb(140, 130, 150)',
+        Amusement: 'rgb(140, 130, 120)',
+        Amazement: 'rgb(120, 135, 150)',
+        Pride: 'rgb(135, 125, 110)',
+        Adoration: 'rgb(130, 115, 135)',
+        Desire: 'rgb(130, 110, 120)',
+        Interest: 'rgb(120, 130, 130)',
+        Neutral: 'rgb(127, 127, 127)',
+        Serenity: 'rgb(120, 135, 120)',
+        Contentment: 'rgb(135, 125, 125)',
+        Relief: 'rgb(120, 140, 135)',
+        Cuteness: 'rgb(140, 125, 150)',
+        Realization: 'rgb(125, 135, 145)',
+        Confusion: 'rgb(130, 120, 140)',
+        Embarassment: 'rgb(140, 120, 120)',
+        Distress: 'rgb(120, 115, 130)',
+        Disappointment: 'rgb(120, 120, 135)',
+        Sadness: 'rgb(110, 120, 140)',
+        Pain: 'rgb(135, 110, 115)',
+        Guilt: 'rgb(130, 125, 120)',
+      };
+      const normalizeWhitespace = (value) =>
+        (value || '').replace(/\r?\n+/g, ' ');
+      const sanitize = (value) => normalizeWhitespace(value).trim();
+      const sanitizeEditing = (value) => normalizeWhitespace(value);
+      let committedText = sanitize(cardTextMain.textContent || '');
+      cardTextMain.textContent = committedText;
+      countTarget.textContent = `${committedText.length} characters`;
+
+      let baseWidth = card.getBoundingClientRect().width;
+      let charWidth = null;
+      let dragging = false;
+      let dragStartX = 0;
+      let dragStartWidth = 0;
+      let dragCommittedText = committedText;
+      let activeHandle = null;
+      let dragDirection = 1;
+      let activePointerId = null;
+      let isComposing = false;
+      const defaultFontSizePx = parseFloat(getComputedStyle(card).fontSize);
+      let currentFontSizePx = defaultFontSizePx;
+
+      emotionTarget.textContent = '';
+      languageTarget.textContent = '';
+      renderOptions(emotionList, '', emotionOptionsStrip, 'emotion');
+      renderOptions(languageList, '', languageOptionsStrip, 'language');
+      attachOverlay('emotion', emotionTarget, emotionList, emotionOptionsStrip);
+      attachOverlay('language', languageTarget, languageList, languageOptionsStrip);
+      analyzeInitialState();
+      const cardToggle = document.getElementById('card-toggle');
+      if (cardToggle) {
+        cardToggle.addEventListener('click', () => {
+          cardToggle.classList.toggle('is-playing');
+        });
+      }
+      function renderOptions(list, currentValue, container, listType) {
+        container.innerHTML = '';
+        let activeItem = null;
+
+        const spacerStart = document.createElement('span');
+        spacerStart.className = 'card-options-spacer-start';
+        container.appendChild(spacerStart);
+
+        list.forEach((item) => {
+          if (listType === 'emotion' && item === 'Neutral') {
+            const separatorLeft = document.createElement('span');
+            separatorLeft.className = 'card-options-separator';
+            separatorLeft.textContent = '|';
+            container.appendChild(separatorLeft);
+          }
+          const span = document.createElement('span');
+          span.className = 'card-options-item';
+          span.textContent = item;
+          if (item.toLowerCase() === (currentValue || '').toLowerCase()) {
+            span.classList.add('is-active');
+            activeItem = span;
+          }
+          span.addEventListener('click', (event) => {
+            event.stopPropagation();
+            if (listType === 'emotion') {
+              applyEmotionChange(item);
+            } else if (listType === 'language') {
+              applyLanguageChange(item);
+            }
+          });
+          container.appendChild(span);
+          if (listType === 'emotion' && item === 'Neutral') {
+            const separatorRight = document.createElement('span');
+            separatorRight.className = 'card-options-separator';
+            separatorRight.textContent = '|';
+            container.appendChild(separatorRight);
+          }
+        });
+        const spacerEnd = document.createElement('span');
+        spacerEnd.className = 'card-options-spacer-end';
+        container.appendChild(spacerEnd);
+
+        if (activeItem) {
+          requestAnimationFrame(() => {
+            const targetScroll =
+              activeItem.offsetLeft -
+              container.clientWidth / 2 +
+              activeItem.clientWidth / 2;
+            const maxScroll = container.scrollWidth - container.clientWidth;
+            container.scrollLeft = Math.max(0, Math.min(maxScroll, targetScroll));
+          });
+        } else {
+          requestAnimationFrame(() => {
+            const maxScroll = container.scrollWidth - container.clientWidth;
+            container.scrollLeft = Math.max(
+              0,
+              Math.min(maxScroll, spacerStart.offsetWidth - container.clientWidth / 2)
+            );
+          });
+        }
+      }
+
+      async function analyzeInitialState() {
+        if (!committedText) {
+          renderOptions(emotionList, 'Neutral', emotionOptionsStrip, 'emotion');
+          renderOptions(languageList, 'Unknown', languageOptionsStrip, 'language');
+          return;
+        }
+        const rewriteResult = await requestRewrite(
+          committedText,
+          Math.max(1, Math.round(committedText.length * 2)),
+          { analysisOnly: true }
+        );
+        applyRewriteOutcome(rewriteResult, committedText, { commitText: false });
+      }
+
+      function showHandle(handleEl) {
+        if (!handleEl) return;
+        if (!handleEl.classList.contains('is-visible')) {
+          handleEl.classList.add('is-visible');
+        }
+      }
+
+      function hideHandle(handleEl) {
+        if (!handleEl) return;
+        if (handleEl.classList.contains('is-visible')) {
+          handleEl.classList.remove('is-visible');
+        }
+      }
+
+      function hideInactiveHandles() {
+        allHandles.forEach((handleEl) => {
+          if (!handleEl) return;
+          if (dragging && handleEl === activeHandle) return;
+          hideHandle(handleEl);
+        });
+      }
+
+      if (cardRow) {
+        cardRow.addEventListener('mouseenter', () => {
+          allHandles.forEach((handleEl) => showHandle(handleEl));
+        });
+        cardRow.addEventListener('mouseleave', () => {
+          if (!dragging) {
+            hideInactiveHandles();
+          }
+        });
+      }
+
+      async function requestRewrite(baseText, targetLength, overrides = {}) {
+        if (!baseText || targetLength <= 0) return null;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        try {
+          const response = await fetch('http://127.0.0.1:5001/generate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              baseText,
+              targetLength,
+              targetEmotion: overrides.targetEmotion || null,
+              targetLanguage: overrides.targetLanguage || null,
+              analysisOnly: overrides.analysisOnly || false,
+            }),
+            signal: controller.signal,
+          });
+          if (!response.ok) {
+            throw new Error(`rewrite_failed_${response.status}`);
+          }
+          const payload = await response.json();
+          const text = sanitize(payload.text || baseText);
+          if (!text) return null;
+          const emotion =
+            typeof payload.emotion === 'string' ? payload.emotion.trim() : '';
+          const language =
+            typeof payload.language === 'string'
+              ? payload.language.trim()
+              : '';
+          return { text, emotion, language };
+        } catch (error) {
+          console.error('rewrite error', error);
+          return null;
+        } finally {
+          clearTimeout(timeout);
+        }
+      }
+
+      function attachOverlay(metaKey, valueTarget, list, container) {
+        const block = document.querySelector(`.card-meta-block[data-meta="${metaKey}"]`);
+        if (!block) return;
+        const listType = block.dataset.meta;
+        const updatePosition = () => {
+          const blockRect = block.getBoundingClientRect();
+          const valueRect = valueTarget.getBoundingClientRect();
+          const centerOffset = valueRect.top + valueRect.height / 2 - blockRect.top;
+          container.style.top = `${centerOffset}px`;
+        };
+        renderOptions(list, valueTarget.textContent, container, listType);
+        updatePosition();
+        const observer = new ResizeObserver(updatePosition);
+        observer.observe(block);
+      }
+
+      function closeOverlay() {}
+
+      function applyEmotionColor(emotion) {
+        const color = emotionColors[emotion] || emotionColors.Neutral;
+        document.body.style.backgroundColor = color;
+      }
+
+      function setCardFontSize(px) {
+        currentFontSizePx = px;
+        document.documentElement.style.setProperty('--card-font-size', `${px}px`);
+        charWidth = null;
+      }
+
+      function adjustFontSizeToFit(length) {
+        const padding = getHorizontalPadding();
+        const maxWidth = window.innerWidth * 0.9 - padding;
+        if (maxWidth <= 0) return;
+        setCardFontSize(defaultFontSizePx);
+        const testLength = Math.max(1, length);
+        const widthPerCharDefault = measureCharWidth();
+        const requiredWidth = widthPerCharDefault * testLength;
+        if (requiredWidth <= maxWidth) return;
+        const scale = Math.max(maxWidth / requiredWidth, 0.45);
+        setCardFontSize(defaultFontSizePx * scale);
+      }
+
+      function applyRewriteOutcome(rewriteResult, fallbackText, options = {}) {
+        const { commitText = true, overrideEmotion, overrideLanguage } = options;
+        const detectedEmotion =
+          overrideEmotion ||
+          (rewriteResult ? rewriteResult.emotion || emotionTarget.textContent || 'Neutral' : emotionTarget.textContent || 'Neutral');
+        const detectedLanguage =
+          overrideLanguage ||
+          (rewriteResult ? rewriteResult.language || languageTarget.textContent || 'Unknown' : languageTarget.textContent || 'Unknown');
+
+        if (commitText && rewriteResult && rewriteResult.text) {
+          committedText = rewriteResult.text;
+          dragCommittedText = committedText;
+          cardTextMain.textContent = committedText;
+          cardTextFill.textContent = '';
+          alignToCommitted();
+          countTarget.textContent = `${committedText.length} characters`;
+        } else if (commitText) {
+          committedText = fallbackText;
+          dragCommittedText = committedText;
+          cardTextMain.textContent = committedText;
+          cardTextFill.textContent = '';
+          alignToCommitted();
+          countTarget.textContent = `${committedText.length} characters`;
+        }
+
+        emotionTarget.textContent = detectedEmotion;
+        languageTarget.textContent = detectedLanguage;
+        renderOptions(emotionList, detectedEmotion, emotionOptionsStrip, 'emotion');
+        renderOptions(languageList, detectedLanguage, languageOptionsStrip, 'language');
+        applyEmotionColor(detectedEmotion);
+      }
+
+      async function applyEmotionChange(emotion) {
+        emotionTarget.textContent = emotion;
+        renderOptions(emotionList, emotion, emotionOptionsStrip, 'emotion');
+        applyEmotionColor(emotion);
+        const rewriteResult = await requestRewrite(
+          committedText,
+          Math.max(1, Math.round(committedText.length * 2)),
+          { targetEmotion: emotion, targetLanguage: languageTarget.textContent || 'Unknown' }
+        );
+        applyRewriteOutcome(rewriteResult, committedText, {
+          commitText: true,
+          overrideEmotion: emotion,
+          overrideLanguage: languageTarget.textContent || 'Unknown',
+        });
+      }
+
+      async function applyLanguageChange(language) {
+        languageTarget.textContent = language;
+        renderOptions(languageList, language, languageOptionsStrip, 'language');
+        const rewriteResult = await requestRewrite(
+          committedText,
+          Math.max(1, Math.round(committedText.length * 2)),
+          { targetLanguage: language, targetEmotion: emotionTarget.textContent || 'Neutral' }
+        );
+        applyRewriteOutcome(rewriteResult, committedText, {
+          commitText: true,
+          overrideLanguage: language,
+          overrideEmotion: emotionTarget.textContent || 'Neutral',
+        });
+      }
+
+      function measureCharWidth() {
+        if (charWidth) return charWidth;
+        const ctx = document.createElement('canvas').getContext('2d');
+        const style = getComputedStyle(cardTextMain);
+        ctx.font = style.font;
+        const metrics = ctx.measureText('▒');
+        charWidth = metrics.width || 0;
+        return charWidth;
+      }
+
+      function widthForText(text) {
+        const padding = getHorizontalPadding();
+        const widthPerChar = measureCharWidth();
+        const minWidth = padding + 1;
+        if (!widthPerChar) {
+          return Math.max(minWidth, padding);
+        }
+        const maxWidth = window.innerWidth * 0.9;
+        const contentWidth = widthPerChar * Math.max(1, text.length);
+        return Math.max(minWidth, Math.min(contentWidth + padding, maxWidth));
+      }
+
+      baseWidth = widthForText(committedText);
+      card.style.width = `${baseWidth}px`;
+      applyWidth(baseWidth);
+      cardTextFill.textContent = '';
+
+      function syncCommitted(text) {
+        committedText = text;
+        dragCommittedText = text;
+        countTarget.textContent = `${committedText.length} characters`;
+      }
+
+      function alignToCommitted() {
+        adjustFontSizeToFit(committedText.length);
+        baseWidth = widthForText(committedText);
+        card.style.width = `${baseWidth}px`;
+        applyWidth(baseWidth);
+      }
+
+      function updateWidthForEditing() {
+        adjustFontSizeToFit(committedText.length);
+        baseWidth = widthForText(committedText);
+        card.style.width = `${baseWidth}px`;
+      }
+
+      function stripFillFromCommitted() {
+        const cleaned = committedText.replace(/▒+$/g, '');
+        if (cleaned !== committedText) {
+          committedText = cleaned;
+          dragCommittedText = cleaned;
+          cardTextMain.textContent = cleaned;
+          cardTextFill.textContent = '';
+          baseWidth = widthForText(committedText);
+          countTarget.textContent = `${committedText.length} characters`;
+        }
+      }
+
+      cardTextMain.addEventListener('focus', () => {
+        updateWidthForEditing();
+      });
+
+      cardTextMain.addEventListener('input', () => {
+        const raw = cardTextMain.textContent || '';
+        const nextText = sanitizeEditing(raw);
+        syncCommitted(sanitize(nextText));
+        if (nextText !== raw) {
+          cardTextMain.textContent = nextText;
+        }
+        cardTextFill.textContent = '';
+        updateWidthForEditing();
+      });
+
+      cardTextMain.addEventListener('compositionstart', () => {
+        isComposing = true;
+      });
+
+      cardTextMain.addEventListener('compositionend', () => {
+        isComposing = false;
+        const raw = cardTextMain.textContent || '';
+        const nextText = sanitizeEditing(raw);
+        syncCommitted(sanitize(nextText));
+        if (nextText !== raw) {
+          cardTextMain.textContent = nextText;
+        }
+        cardTextFill.textContent = '';
+        updateWidthForEditing();
+      });
+
+      cardTextMain.addEventListener('keydown', async (event) => {
+        if (event.key === 'Enter' && !event.shiftKey && !isComposing) {
+          event.preventDefault();
+          cardTextMain.blur();
+          const cleanText = sanitize(cardTextMain.textContent || '');
+          syncCommitted(cleanText);
+          cardTextMain.textContent = committedText;
+          cardTextFill.textContent = '';
+          alignToCommitted();
+          const rewriteResult = await requestRewrite(
+            committedText,
+            Math.max(1, Math.round(committedText.length * 2)),
+            { analysisOnly: true }
+          );
+          applyRewriteOutcome(rewriteResult, committedText, { commitText: false });
+        }
+      });
+
+      cardTextMain.addEventListener('blur', () => {
+        const nextText = sanitize(cardTextMain.textContent || '');
+        syncCommitted(nextText);
+        cardTextMain.textContent = committedText;
+        cardTextFill.textContent = '';
+        alignToCommitted();
+      });
+
+      function getHorizontalPadding() {
+        const style = getComputedStyle(card);
+        return (
+          parseFloat(style.paddingLeft) + parseFloat(style.paddingRight)
+        );
+      }
+
+      function applyWidth(currentWidth) {
+        const padding = getHorizontalPadding();
+        const available = currentWidth - padding;
+        const widthPerChar = measureCharWidth();
+        if (available <= 0 || widthPerChar <= 0) {
+          if (cardTextMain.textContent !== '') {
+            cardTextMain.textContent = '';
+          }
+          if (cardTextFill.textContent !== '') {
+            cardTextFill.textContent = '';
+          }
+          return;
+        }
+        const capacity = Math.floor(available / widthPerChar);
+        if (capacity >= dragCommittedText.length) {
+          const fillCount = capacity - dragCommittedText.length;
+          const fillString = fillCount > 0 ? '▒'.repeat(fillCount) : '';
+          if (cardTextMain.textContent !== dragCommittedText) {
+            cardTextMain.textContent = dragCommittedText;
+          }
+          if (cardTextFill.textContent !== fillString) {
+            cardTextFill.textContent = fillString;
+          }
+        } else {
+          const truncated =
+            capacity > 0 ? dragCommittedText.slice(0, capacity) : '';
+          if (cardTextMain.textContent !== truncated) {
+            cardTextMain.textContent = truncated;
+          }
+          if (cardTextFill.textContent !== '') {
+            cardTextFill.textContent = '';
+          }
+        }
+      }
+
+      function setCardWidth(newWidth) {
+        const padding = getHorizontalPadding();
+        const minWidth = padding + 1;
+        const maxWidth = window.innerWidth * 0.9;
+        const bounded = Math.max(minWidth, Math.min(newWidth, maxWidth));
+        card.style.width = `${bounded}px`;
+        applyWidth(bounded);
+      }
+
+      function startDrag(event, handleEl, direction) {
+        dragging = true;
+        activeHandle = handleEl;
+        dragDirection = direction;
+        activePointerId = event.pointerId;
+        showHandle(handleEl);
+        stripFillFromCommitted();
+        dragStartX = event.clientX;
+        dragStartWidth = card.getBoundingClientRect().width;
+        dragCommittedText = committedText;
+        handleEl.setPointerCapture(event.pointerId);
+        applyWidth(dragStartWidth);
+      }
+
+      function handlePointerMove(event) {
+        if (!dragging) return;
+        if (event.pointerId !== activePointerId) return;
+        const deltaX = (event.clientX - dragStartX) * 2;
+        setCardWidth(dragStartWidth + deltaX * dragDirection);
+      }
+
+      async function endDrag(event) {
+        if (!dragging) return;
+        dragging = false;
+        if (activeHandle && activePointerId !== null) {
+          activeHandle.releasePointerCapture(activePointerId);
+        }
+        const finalText =
+          (cardTextMain.textContent || '') + (cardTextFill.textContent || '');
+        const rawLength = finalText.length;
+        const targetLength = Math.max(1, Math.round(rawLength * 2));
+        const rewriteResult = await requestRewrite(
+          committedText,
+          targetLength,
+          {
+            targetEmotion: emotionTarget.textContent || 'Neutral',
+            targetLanguage: languageTarget.textContent || 'Unknown',
+          }
+        );
+        applyRewriteOutcome(rewriteResult, sanitize(finalText.replace(/▒+$/g, '')), {
+          overrideEmotion: emotionTarget.textContent || 'Neutral',
+          overrideLanguage: languageTarget.textContent || 'Unknown',
+        });
+        activeHandle = null;
+        activePointerId = null;
+        hideInactiveHandles();
+      }
+
+      function attachHandle(handleEl, direction) {
+        if (!handleEl) return;
+        handleEl.addEventListener('pointerdown', (event) =>
+          startDrag(event, handleEl, direction)
+        );
+        handleEl.addEventListener('pointermove', handlePointerMove);
+        handleEl.addEventListener('pointerup', endDrag);
+        handleEl.addEventListener('pointercancel', endDrag);
+      }
+
+      attachHandle(handleRight, 1);
+      attachHandle(handleLeft, -1);
+    </script>
+  </body>
+</html>

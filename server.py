@@ -1,5 +1,6 @@
 import os
 import re
+from pathlib import Path
 from typing import Optional
 
 import requests
@@ -7,7 +8,29 @@ from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyBV20o1GDxWVAoWIvYv0fOmkLttLkBmaHk")
+
+def load_env_file():
+    env_path = Path(__file__).resolve().parent / ".env"
+    if not env_path.exists():
+        return
+    for line in env_path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith('#'):
+            continue
+        if '=' not in line:
+            continue
+        key, value = line.split('=', 1)
+        key = key.strip()
+        value = value.strip()
+        if key and value and key not in os.environ:
+            os.environ[key] = value
+
+
+load_env_file()
+
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+if not GEMINI_API_KEY:
+    raise RuntimeError("GEMINI_API_KEY is not set. Please create a .env file with GEMINI_API_KEY=<your key>.")
 GEMINI_MODEL = "models/gemini-2.5-flash-lite"
 GEMINI_ENDPOINT = f"https://generativelanguage.googleapis.com/v1beta/{GEMINI_MODEL}:generateContent"
 
